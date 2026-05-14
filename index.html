@@ -112,20 +112,12 @@ tr:hover td{background:var(--surface2);cursor:pointer}
 .field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border)}
 .section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3);margin:1.25rem 0 0.625rem;padding-bottom:6px;border-bottom:1px solid var(--border)}
-.paste-area{width:100%;font-family:ui-monospace,monospace;font-size:11px;min-height:80px;border-radius:var(--radius);border:1px solid var(--border2);padding:8px;background:var(--surface2);color:var(--text);resize:vertical;outline:none;line-height:1.5}
-.paste-area:focus{border-color:var(--blue)}
-.parse-row{display:flex;gap:8px;margin-top:6px;align-items:center}
-.parse-status{font-size:12px;color:var(--text2)}
-.parse-status.ok{color:var(--green-text)}
-.parse-status.err{color:var(--red-text)}
 .empty{text-align:center;padding:3rem 1rem;color:var(--text2)}
 .empty i{font-size:44px;display:block;margin-bottom:0.75rem;opacity:0.3}
 .empty p{font-size:14px}
-.spinner{display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:-2px}
-@keyframes spin{to{transform:rotate(360deg)}}
-.count-label{font-size:12px;color:var(--text2)}
 .setup-banner{background:var(--amber-bg);border:1px solid;border-color:var(--amber-text);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1rem;font-size:13px;color:var(--amber-text);display:flex;align-items:flex-start;gap:10px}
 .setup-banner i{font-size:18px;flex-shrink:0;margin-top:1px}
+.count-label{font-size:12px;color:var(--text2)}
 </style>
 </head>
 <body>
@@ -162,16 +154,14 @@ tr:hover td{background:var(--surface2);cursor:pointer}
   </div>
 
   <div class="settings-panel" id="settings-panel">
-    <h3><i class="ti ti-brand-github" style="font-size:16px"></i> Settings</h3>
+    <h3><i class="ti ti-brand-github" style="font-size:16px"></i> GitHub sync settings</h3>
     <div class="settings-grid">
       <div class="field"><label>GitHub username</label><input id="s-user" placeholder="e.g. johndoe" oninput="saveSettings()"></div>
       <div class="field"><label>Repository name</label><input id="s-repo" placeholder="e.g. car-search" oninput="saveSettings()"></div>
-      <div class="field"><label>GitHub personal access token</label><input type="password" id="s-token" placeholder="ghp_…" oninput="saveSettings()"></div>
-      <div class="field"><label>Anthropic API key (Carfax AI)</label><input type="password" id="s-akey" placeholder="sk-ant-…" oninput="saveSettings()"></div>
+      <div class="field" style="grid-column:1/-1"><label>Personal access token</label><input type="password" id="s-token" placeholder="ghp_…" oninput="saveSettings()"></div>
     </div>
     <div class="settings-hint">
-      <strong>GitHub token:</strong> Go to <a href="https://github.com/settings/tokens/new" target="_blank">github.com/settings/tokens/new</a> → give it any name → check the <code>repo</code> scope → Generate token. Paste it above. It's stored only in your browser's localStorage and sent only to GitHub directly.<br><br>
-      <strong>Anthropic key:</strong> <a href="https://console.anthropic.com/" target="_blank">console.anthropic.com</a> → API Keys → Create key. Used only for the Carfax paste-to-autofill feature.
+      <strong>How to get a token:</strong> Go to <a href="https://github.com/settings/tokens/new" target="_blank">github.com/settings/tokens/new</a> → give it any name → check the <code>repo</code> scope → Generate token. The token is stored only in your browser's localStorage and sent only to GitHub directly — never anywhere else.
     </div>
   </div>
 
@@ -201,13 +191,6 @@ tr:hover td{background:var(--surface2);cursor:pointer}
 <div id="modal" class="modal-bg" style="display:none" onclick="bgClose(event)">
   <div class="modal">
     <h2><i class="ti ti-car" style="font-size:18px"></i> <span id="modal-title">Add car</span></h2>
-
-    <div class="section-title">Carfax paste (optional)</div>
-    <textarea class="paste-area" id="paste-box" placeholder="Paste your Carfax report text here — open the PDF, Ctrl+A, Ctrl+C, paste here. Then click &quot;Parse with AI&quot; to auto-fill."></textarea>
-    <div class="parse-row">
-      <button onclick="parseCarfax()" id="parse-btn"><i class="ti ti-sparkles"></i> Parse with AI</button>
-      <span class="parse-status" id="parse-status"></span>
-    </div>
 
     <div class="section-title">Listing details</div>
     <div class="field-row">
@@ -282,13 +265,12 @@ function saveSettings(){
     user:  document.getElementById('s-user').value.trim(),
     repo:  document.getElementById('s-repo').value.trim(),
     token: document.getElementById('s-token').value.trim(),
-    akey:  document.getElementById('s-akey').value.trim(),
   }));
   updateSyncUI();
 }
 function loadSettingsForm(){
   const s = getSettings();
-  ['user','repo','token','akey'].forEach(k => { document.getElementById('s-'+k).value = s[k]||''; });
+  ['user','repo','token'].forEach(k => { document.getElementById('s-'+k).value = s[k]||''; });
 }
 function isConfigured(){ const s=getSettings(); return !!(s.user&&s.repo&&s.token); }
 
@@ -489,9 +471,6 @@ function openModal(id){
   editId=id||null;
   FIELDS.forEach(f=>{const el=document.getElementById('f-'+f);if(el)el.value='';});
   document.getElementById('f-status').value='active';
-  document.getElementById('paste-box').value='';
-  document.getElementById('parse-status').textContent='';
-  document.getElementById('parse-status').className='parse-status';
   if(id){
     const c=cars.find(x=>x.id===id);
     if(c){
@@ -552,45 +531,6 @@ function importLocal(e){
     } catch{ alert('Could not read file.'); }
   };
   r.readAsText(file); e.target.value='';
-}
-
-async function parseCarfax(){
-  const text=document.getElementById('paste-box').value.trim();
-  if(!text){alert('Paste some Carfax text first.');return;}
-  const akey=getSettings().akey;
-  if(!akey){alert('Add your Anthropic API key in Settings first.');toggleSettings();return;}
-  const btn=document.getElementById('parse-btn');
-  const status=document.getElementById('parse-status');
-  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Parsing…';
-  status.textContent=''; status.className='parse-status';
-  const prompt=`You are parsing a Canadian vehicle Carfax or Carproof report. Extract the following fields and return ONLY a valid JSON object — no markdown, no explanation, no code fences.
-{"year":"","make":"","model":"","trim":"","mileage":"","cfstatus":"clean|accident|salvage|lemon","damage":"","provinces":"","owners":"","service":"","cfnotes":""}
-Rules:
-- Leave fields as empty string if not found.
-- cfstatus: clean=no accidents; accident=collision reported; salvage=written-off/rebuilt; lemon=lemon law.
-- damage: dollar amount only, no $ or commas. Sum multiple incidents.
-- mileage: number only in km. Convert miles if needed.
-- provinces: comma-separated abbreviations (ON, QC, AB, BC, MB, SK, NS, NB, PE, NL). Flag QC if present.
-- owners: number only.
-- service: short e.g. "6 records".
-- cfnotes: comma-separated flags: odometer issues, US history, fleet/rental, open recalls, lien. Empty if none.
-REPORT TEXT:\n${text.slice(0,5000)}`;
-  try{
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':akey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,messages:[{role:'user',content:prompt}]})
-    });
-    if(!resp.ok){const e=await resp.json().catch(()=>({}));throw new Error(e.error?.message||`API ${resp.status}`);}
-    const data=await resp.json();
-    const parsed=JSON.parse(data.content?.find(b=>b.type==='text')?.text.replace(/```json|```/g,'').trim()||'{}');
-    let filled=0;
-    ['year','make','model','trim','mileage','cfstatus','damage','provinces','owners','service','cfnotes'].forEach(f=>{
-      if(parsed[f]){const el=document.getElementById('f-'+f);if(el){el.value=parsed[f];filled++;}}
-    });
-    status.textContent=`✓ Filled ${filled} fields — review below`; status.className='parse-status ok';
-  } catch(e){ status.textContent=`Error: ${e.message}`; status.className='parse-status err'; }
-  btn.disabled=false; btn.innerHTML='<i class="ti ti-sparkles"></i> Parse with AI';
 }
 
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('modal').style.display!=='none')closeModal();});

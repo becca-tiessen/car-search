@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Car Search Tracker</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.10.0/dist/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f6f3;--surface:#ffffff;--surface2:#f2f0ec;
+  --border:#e0ddd6;--border2:#c8c5bc;
+  --text:#1a1917;--text2:#6b6861;--text3:#9c998f;
+  --blue:#185FA5;--blue-bg:#E6F1FB;--blue-text:#0c447c;
+  --green-bg:#EAF3DE;--green-text:#3B6D11;
+  --amber-bg:#FAEEDA;--amber-text:#854F0B;
+  --red-bg:#FCEBEB;--red-text:#A32D2D;
+  --gray-bg:#F1EFE8;--gray-text:#5F5E5A;
+  --radius:8px;--radius-lg:12px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#1a1917;--surface:#242220;--surface2:#2e2c29;
+    --border:#3a3835;--border2:#4a4845;
+    --text:#f0ede8;--text2:#a09d96;--text3:#6b6861;
+    --blue:#4d9de0;--blue-bg:#0c2d4a;--blue-text:#85B7EB;
+    --green-bg:#173404;--green-text:#97C459;
+    --amber-bg:#412402;--amber-text:#FAC775;
+    --red-bg:#501313;--red-text:#F09595;
+    --gray-bg:#2C2C2A;--gray-text:#B4B2A9;
+  }
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);min-height:100vh;color:var(--text);font-size:15px;line-height:1.5}
+a{color:var(--blue)}
+.app{max-width:1100px;margin:0 auto;padding:1.5rem 1rem}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:12px}
+.topbar h1{font-size:19px;font-weight:600;display:flex;align-items:center;gap:8px;letter-spacing:-0.3px}
+.topbar h1 i{font-size:21px;color:var(--text2)}
+.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+button{font-family:inherit;font-size:13px;padding:6px 12px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background 0.12s;white-space:nowrap}
+button:hover{background:var(--surface2)}
+button:active{transform:scale(0.98)}
+button.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+button.primary:hover{opacity:0.9}
+button.danger{color:var(--red-text);border-color:var(--border)}
+button.danger:hover{background:var(--red-bg)}
+button:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+.sync-bar{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text2);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:7px 12px;margin-bottom:1rem;flex-wrap:wrap}
+.sync-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;background:var(--border2)}
+.sync-dot.ok{background:#639922}
+.sync-dot.pending{background:#BA7517}
+.sync-dot.err{background:#E24B4A}
+.sync-dot.loading{background:var(--blue);animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.sync-actions{display:flex;gap:6px;margin-left:auto}
+.sync-actions button{font-size:11px;padding:3px 8px}
+.settings-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;margin-bottom:1rem;display:none}
+.settings-panel h3{font-size:13px;font-weight:600;margin-bottom:1rem;display:flex;align-items:center;gap:6px}
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.settings-grid{grid-template-columns:1fr}}
+.settings-hint{font-size:11px;color:var(--text3);margin-top:0.875rem;line-height:1.7}
+.settings-hint code{background:var(--surface2);padding:1px 5px;border-radius:4px;font-family:ui-monospace,monospace}
+.view-toggle{display:flex;border:1px solid var(--border2);border-radius:var(--radius);overflow:hidden}
+.view-toggle button{border:none;border-radius:0;padding:6px 10px}
+.view-toggle button.active{background:var(--surface2)}
+.filters{display:flex;gap:8px;margin-bottom:0.875rem;flex-wrap:wrap;align-items:center}
+.filters input,.filters select{font-family:inherit;font-size:13px;padding:6px 10px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--surface);color:var(--text);outline:none}
+.filters input:focus,.filters select:focus{border-color:var(--blue)}
+.filters input{min-width:200px}
+.status-tabs{display:flex;gap:4px;margin-bottom:1rem;flex-wrap:wrap}
+.status-tab{font-size:12px;padding:4px 14px;border-radius:20px;border:1px solid var(--border);cursor:pointer;background:var(--surface);color:var(--text2);transition:all 0.12s}
+.status-tab:hover{border-color:var(--border2);color:var(--text)}
+.status-tab.active{border-color:var(--border2);color:var(--text);font-weight:500;background:var(--surface2)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem;transition:border-color 0.12s}
+.card:hover{border-color:var(--border2)}
+.card.ruled-out{opacity:0.45}
+.card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:8px}
+.card-title{font-size:14px;font-weight:600;flex:1;line-height:1.3}
+.card-price{font-size:15px;font-weight:600;color:var(--blue);white-space:nowrap}
+.card-meta{font-size:12px;color:var(--text2);margin-bottom:10px;display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.badge{display:inline-flex;align-items:center;gap:3px;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:500}
+.badge i{font-size:11px}
+.badge-active{background:var(--green-bg);color:var(--green-text)}
+.badge-favourite{background:var(--amber-bg);color:var(--amber-text)}
+.badge-pending{background:var(--blue-bg);color:var(--blue-text)}
+.badge-ruledout{background:var(--gray-bg);color:var(--gray-text)}
+.badge-flag{background:var(--red-bg);color:var(--red-text)}
+.badge-ok{background:var(--green-bg);color:var(--green-text)}
+.chip-qc{background:var(--red-bg);color:var(--red-text);padding:1px 7px;border-radius:8px;font-size:10px;font-weight:600}
+.carfax-grid{display:grid;grid-template-columns:auto 1fr;gap:3px 8px;margin-bottom:8px;font-size:12px}
+.cf-label{color:var(--text3);white-space:nowrap;padding:1px 0}
+.cf-val{color:var(--text);padding:1px 0}
+.card-notes{font-size:12px;background:var(--surface2);border-radius:var(--radius);padding:8px 10px;margin-top:8px;color:var(--text2);border-left:2px solid var(--border2)}
+.card-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.card-actions button{font-size:11px;padding:4px 9px}
+.table-wrap{overflow-x:auto;border-radius:var(--radius-lg);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;background:var(--surface);min-width:700px}
+th{font-size:11px;font-weight:600;color:var(--text2);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;letter-spacing:0.04em;text-transform:uppercase}
+td{font-size:13px;padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr.ruled-out td{opacity:0.4}
+tr:hover td{background:var(--surface2);cursor:pointer}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:flex-start;justify-content:center;padding:2rem 1rem;overflow-y:auto;z-index:100}
+.modal{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);padding:1.5rem;width:100%;max-width:560px;margin:auto}
+.modal h2{font-size:16px;font-weight:600;margin-bottom:1.25rem;display:flex;align-items:center;gap:8px}
+.field{margin-bottom:0.875rem}
+.field label{display:block;font-size:11px;font-weight:500;color:var(--text2);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.04em}
+.field input,.field select,.field textarea{width:100%;font-family:inherit;font-size:13px;padding:7px 10px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--surface);color:var(--text);outline:none;transition:border-color 0.12s}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--blue)}
+.field textarea{resize:vertical;min-height:72px;line-height:1.5}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border)}
+.section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3);margin:1.25rem 0 0.625rem;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.paste-area{width:100%;font-family:ui-monospace,monospace;font-size:11px;min-height:80px;border-radius:var(--radius);border:1px solid var(--border2);padding:8px;background:var(--surface2);color:var(--text);resize:vertical;outline:none;line-height:1.5}
+.paste-area:focus{border-color:var(--blue)}
+.parse-row{display:flex;gap:8px;margin-top:6px;align-items:center}
+.parse-status{font-size:12px;color:var(--text2)}
+.parse-status.ok{color:var(--green-text)}
+.parse-status.err{color:var(--red-text)}
+.empty{text-align:center;padding:3rem 1rem;color:var(--text2)}
+.empty i{font-size:44px;display:block;margin-bottom:0.75rem;opacity:0.3}
+.empty p{font-size:14px}
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:-2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.count-label{font-size:12px;color:var(--text2)}
+.setup-banner{background:var(--amber-bg);border:1px solid;border-color:var(--amber-text);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:1rem;font-size:13px;color:var(--amber-text);display:flex;align-items:flex-start;gap:10px}
+.setup-banner i{font-size:18px;flex-shrink:0;margin-top:1px}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <h1><i class="ti ti-car"></i> Car Search</h1>
+    <div class="actions">
+      <button onclick="toggleSettings()"><i class="ti ti-settings"></i> Settings</button>
+      <div class="view-toggle">
+        <button id="btn-cards" class="active" onclick="setView('cards')" title="Card view"><i class="ti ti-layout-cards"></i></button>
+        <button id="btn-table" onclick="setView('table')" title="Table view"><i class="ti ti-table"></i></button>
+      </div>
+      <button onclick="exportLocal()"><i class="ti ti-download"></i> Export JSON</button>
+      <label style="cursor:pointer;display:inline-flex">
+        <button type="button" onclick="this.parentElement.querySelector('input').click()"><i class="ti ti-upload"></i> Import JSON</button>
+        <input type="file" accept=".json" style="display:none" onchange="importLocal(event)">
+      </label>
+      <button class="primary" onclick="openModal()"><i class="ti ti-plus"></i> Add car</button>
+    </div>
+  </div>
+
+  <div class="setup-banner" id="setup-banner" style="display:none">
+    <i class="ti ti-alert-triangle"></i>
+    <div><strong>GitHub sync not configured.</strong> Data is saving to your browser only. Click <strong>Settings</strong> to connect GitHub — takes about 2 minutes and makes your data permanent and cross-device.</div>
+  </div>
+
+  <div class="sync-bar">
+    <span class="sync-dot" id="sync-dot"></span>
+    <span id="sync-label">Connecting…</span>
+    <div class="sync-actions">
+      <button onclick="syncNow()" id="sync-btn"><i class="ti ti-refresh"></i> Sync now</button>
+    </div>
+  </div>
+
+  <div class="settings-panel" id="settings-panel">
+    <h3><i class="ti ti-brand-github" style="font-size:16px"></i> Settings</h3>
+    <div class="settings-grid">
+      <div class="field"><label>GitHub username</label><input id="s-user" placeholder="e.g. johndoe" oninput="saveSettings()"></div>
+      <div class="field"><label>Repository name</label><input id="s-repo" placeholder="e.g. car-search" oninput="saveSettings()"></div>
+      <div class="field"><label>GitHub personal access token</label><input type="password" id="s-token" placeholder="ghp_…" oninput="saveSettings()"></div>
+      <div class="field"><label>Anthropic API key (Carfax AI)</label><input type="password" id="s-akey" placeholder="sk-ant-…" oninput="saveSettings()"></div>
+    </div>
+    <div class="settings-hint">
+      <strong>GitHub token:</strong> Go to <a href="https://github.com/settings/tokens/new" target="_blank">github.com/settings/tokens/new</a> → give it any name → check the <code>repo</code> scope → Generate token. Paste it above. It's stored only in your browser's localStorage and sent only to GitHub directly.<br><br>
+      <strong>Anthropic key:</strong> <a href="https://console.anthropic.com/" target="_blank">console.anthropic.com</a> → API Keys → Create key. Used only for the Carfax paste-to-autofill feature.
+    </div>
+  </div>
+
+  <div class="filters">
+    <input type="search" id="search" placeholder="Search make, model, dealer…" oninput="render()">
+    <select id="sort" onchange="render()">
+      <option value="date">Newest first</option>
+      <option value="price-asc">Price: low → high</option>
+      <option value="price-desc">Price: high → low</option>
+      <option value="mileage">Mileage: low → high</option>
+    </select>
+    <span class="count-label" id="count-label"></span>
+  </div>
+
+  <div class="status-tabs">
+    <div class="status-tab active" data-status="all" onclick="setTab(this)">All</div>
+    <div class="status-tab" data-status="active" onclick="setTab(this)">Active</div>
+    <div class="status-tab" data-status="favourite" onclick="setTab(this)">⭐ Favourites</div>
+    <div class="status-tab" data-status="pending" onclick="setTab(this)">Pending</div>
+    <div class="status-tab" data-status="ruledout" onclick="setTab(this)">Ruled out</div>
+  </div>
+
+  <div id="content"></div>
+</div>
+
+<!-- Modal -->
+<div id="modal" class="modal-bg" style="display:none" onclick="bgClose(event)">
+  <div class="modal">
+    <h2><i class="ti ti-car" style="font-size:18px"></i> <span id="modal-title">Add car</span></h2>
+
+    <div class="section-title">Carfax paste (optional)</div>
+    <textarea class="paste-area" id="paste-box" placeholder="Paste your Carfax report text here — open the PDF, Ctrl+A, Ctrl+C, paste here. Then click &quot;Parse with AI&quot; to auto-fill."></textarea>
+    <div class="parse-row">
+      <button onclick="parseCarfax()" id="parse-btn"><i class="ti ti-sparkles"></i> Parse with AI</button>
+      <span class="parse-status" id="parse-status"></span>
+    </div>
+
+    <div class="section-title">Listing details</div>
+    <div class="field-row">
+      <div class="field"><label>Year</label><input id="f-year" type="number" placeholder="2019" min="1990" max="2030"></div>
+      <div class="field"><label>Make</label><input id="f-make" placeholder="Honda"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Model</label><input id="f-model" placeholder="Civic"></div>
+      <div class="field"><label>Trim</label><input id="f-trim" placeholder="Sport Touring"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Price ($)</label><input id="f-price" type="number" placeholder="18500" min="0"></div>
+      <div class="field"><label>Mileage (km)</label><input id="f-mileage" type="number" placeholder="72000" min="0"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Dealer / Seller</label><input id="f-dealer" placeholder="ABC Auto or Private"></div>
+      <div class="field"><label>Status</label>
+        <select id="f-status">
+          <option value="active">Active</option>
+          <option value="favourite">⭐ Favourite</option>
+          <option value="pending">Pending</option>
+          <option value="ruledout">Ruled out</option>
+        </select>
+      </div>
+    </div>
+    <div class="field"><label>Listing URL</label><input id="f-url" type="url" placeholder="https://www.autotrader.ca/…"></div>
+
+    <div class="section-title">Carfax info</div>
+    <div class="field-row">
+      <div class="field"><label>Carfax status</label>
+        <select id="f-cfstatus">
+          <option value="">Unknown / not run</option>
+          <option value="clean">✓ Clean</option>
+          <option value="accident">⚠ Accident reported</option>
+          <option value="salvage">✕ Salvage / written off</option>
+          <option value="lemon">✕ Lemon law buyback</option>
+        </select>
+      </div>
+      <div class="field"><label>Reported damage ($)</label><input id="f-damage" type="number" placeholder="0" min="0"></div>
+    </div>
+    <div class="field"><label>Provinces registered (comma-separated)</label><input id="f-provinces" placeholder="ON, AB — QC will be flagged automatically"></div>
+    <div class="field-row">
+      <div class="field"><label>Number of owners</label><input id="f-owners" type="number" placeholder="1" min="0"></div>
+      <div class="field"><label>Service records</label><input id="f-service" placeholder="e.g. 5 records"></div>
+    </div>
+    <div class="field"><label>Other Carfax flags</label><textarea id="f-cfnotes" placeholder="Odometer discrepancy, US vehicle, fleet/rental use, open recalls…"></textarea></div>
+
+    <div class="section-title">My notes</div>
+    <div class="field"><textarea id="f-notes" placeholder="Test drive impressions, negotiation notes, questions to ask, deal-breakers…"></textarea></div>
+
+    <div class="modal-actions">
+      <button id="delete-btn" class="danger" style="display:none;margin-right:auto" onclick="deleteCar()"><i class="ti ti-trash"></i> Delete</button>
+      <button onclick="closeModal()">Cancel</button>
+      <button class="primary" onclick="saveCar()"><i class="ti ti-check"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let cars = JSON.parse(localStorage.getItem('carsearch_v1') || '[]');
+let view = 'cards';
+let tabStatus = 'all';
+let editId = null;
+let settingsOpen = false;
+let syncInFlight = false;
+let pendingSync = false;
+let ghSha = null;
+
+function getSettings(){ return JSON.parse(localStorage.getItem('carsearch_settings') || '{}'); }
+function saveSettings(){
+  localStorage.setItem('carsearch_settings', JSON.stringify({
+    user:  document.getElementById('s-user').value.trim(),
+    repo:  document.getElementById('s-repo').value.trim(),
+    token: document.getElementById('s-token').value.trim(),
+    akey:  document.getElementById('s-akey').value.trim(),
+  }));
+  updateSyncUI();
+}
+function loadSettingsForm(){
+  const s = getSettings();
+  ['user','repo','token','akey'].forEach(k => { document.getElementById('s-'+k).value = s[k]||''; });
+}
+function isConfigured(){ const s=getSettings(); return !!(s.user&&s.repo&&s.token); }
+
+function ghHeaders(){ const s=getSettings(); return {'Authorization':`Bearer ${s.token}`,'Content-Type':'application/json','Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'}; }
+function ghUrl(){ const s=getSettings(); return `https://api.github.com/repos/${s.user}/${s.repo}/contents/cars.json`; }
+
+async function ghFetch(){
+  const r = await fetch(ghUrl(), {headers:ghHeaders()});
+  if(r.status===404) return null;
+  if(!r.ok) throw new Error(`GitHub ${r.status}: ${r.statusText}`);
+  const d = await r.json();
+  ghSha = d.sha;
+  return JSON.parse(decodeURIComponent(escape(atob(d.content.replace(/\n/g,'')))));
+}
+async function ghPush(data){
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(data,null,2))));
+  const r = await fetch(ghUrl(), {
+    method:'PUT', headers:ghHeaders(),
+    body: JSON.stringify({message:`Update cars.json — ${new Date().toLocaleString('en-CA')}`,content,...(ghSha?{sha:ghSha}:{})})
+  });
+  if(!r.ok){ const e=await r.json().catch(()=>({})); throw new Error(e.message||`GitHub ${r.status}`); }
+  const d = await r.json();
+  ghSha = d.content.sha;
+}
+
+function setSyncDot(state,msg){
+  document.getElementById('sync-dot').className='sync-dot '+state;
+  document.getElementById('sync-label').textContent=msg;
+}
+function updateSyncUI(){
+  const ok = isConfigured();
+  document.getElementById('setup-banner').style.display = ok?'none':'flex';
+  document.getElementById('sync-btn').disabled = !ok;
+  if(!ok) setSyncDot('','Not connected to GitHub — see Settings');
+}
+
+async function syncNow(){
+  if(!isConfigured()) return;
+  if(syncInFlight){ pendingSync=true; return; }
+  syncInFlight=true; pendingSync=false;
+  document.getElementById('sync-btn').disabled=true;
+  setSyncDot('loading','Saving to GitHub…');
+  try{
+    await ghPush(cars);
+    localStorage.setItem('carsearch_v1',JSON.stringify(cars));
+    const t=new Date().toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'});
+    setSyncDot('ok',`Saved to GitHub · ${t}`);
+  } catch(e){ setSyncDot('err',`Sync failed: ${e.message}`); }
+  syncInFlight=false;
+  document.getElementById('sync-btn').disabled=false;
+  if(pendingSync) syncNow();
+}
+
+async function initialLoad(){
+  updateSyncUI();
+  if(!isConfigured()){ render(); return; }
+  setSyncDot('loading','Loading from GitHub…');
+  document.getElementById('sync-btn').disabled=true;
+  try{
+    const remote = await ghFetch();
+    if(remote){
+      const remoteIds = new Set(remote.map(c=>c.id));
+      const localOnly = cars.filter(c=>!remoteIds.has(c.id));
+      cars = [...remote,...localOnly];
+      if(localOnly.length) await ghPush(cars);
+      localStorage.setItem('carsearch_v1',JSON.stringify(cars));
+    } else {
+      await ghPush(cars);
+    }
+    const t=new Date().toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'});
+    setSyncDot('ok',`Synced · ${t}`);
+  } catch(e){ setSyncDot('err',`Could not reach GitHub: ${e.message}`); }
+  document.getElementById('sync-btn').disabled=false;
+  render();
+}
+
+function persist(){
+  localStorage.setItem('carsearch_v1',JSON.stringify(cars));
+  setSyncDot('pending','Unsaved changes…');
+  syncNow();
+}
+
+function toggleSettings(){
+  settingsOpen=!settingsOpen;
+  document.getElementById('settings-panel').style.display=settingsOpen?'block':'none';
+  if(settingsOpen) loadSettingsForm();
+}
+function setView(v){
+  view=v;
+  document.getElementById('btn-cards').classList.toggle('active',v==='cards');
+  document.getElementById('btn-table').classList.toggle('active',v==='table');
+  render();
+}
+function setTab(el){
+  document.querySelectorAll('.status-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active'); tabStatus=el.dataset.status; render();
+}
+
+const SLABELS={active:'Active',favourite:'Favourite',pending:'Pending',ruledout:'Ruled out'};
+function statusBadge(s){ return `<span class="badge badge-${s}">${SLABELS[s]||s}</span>`; }
+function cfBadge(s){
+  if(!s) return '';
+  if(s==='clean')    return '<span class="badge badge-ok"><i class="ti ti-shield-check"></i> Clean</span>';
+  if(s==='accident') return '<span class="badge badge-flag"><i class="ti ti-alert-triangle"></i> Accident</span>';
+  if(s==='salvage')  return '<span class="badge badge-flag"><i class="ti ti-alert-circle"></i> Salvage</span>';
+  if(s==='lemon')    return '<span class="badge badge-flag"><i class="ti ti-bug"></i> Lemon</span>';
+  return '';
+}
+function provinceBadges(str){
+  if(!str) return '';
+  return str.split(',').map(p=>{
+    p=p.trim(); if(!p) return '';
+    const bad=['QC','QUÉBEC','QUEBEC'].includes(p.toUpperCase());
+    return bad?`<span class="chip-qc">⚠ ${p}</span>`:`<span style="font-size:11px;color:var(--text2)">${p}</span>`;
+  }).join(' ');
+}
+function hasQC(s){ return s&&['QC','QUÉBEC','QUEBEC'].some(q=>s.toUpperCase().includes(q)); }
+function fmtPrice(n){ return n?'$'+Number(n).toLocaleString('en-CA'):'—'; }
+function fmtKm(n){ return n?Number(n).toLocaleString('en-CA')+' km':'—'; }
+
+function filtered(){
+  const q=(document.getElementById('search')?.value||'').toLowerCase();
+  const sort=document.getElementById('sort')?.value||'date';
+  let list=cars.filter(c=>{
+    if(tabStatus!=='all'&&c.status!==tabStatus) return false;
+    if(q){ const b=`${c.year} ${c.make} ${c.model} ${c.trim} ${c.dealer} ${c.provinces}`.toLowerCase(); if(!b.includes(q)) return false; }
+    return true;
+  });
+  list.sort((a,b)=>{
+    if(sort==='price-asc')  return (a.price||0)-(b.price||0);
+    if(sort==='price-desc') return (b.price||0)-(a.price||0);
+    if(sort==='mileage')    return (a.mileage||0)-(b.mileage||0);
+    return (b.added||0)-(a.added||0);
+  });
+  return list;
+}
+
+function render(){
+  const list=filtered();
+  const lbl=document.getElementById('count-label');
+  if(lbl) lbl.textContent=list.length+(list.length===1?' car':' cars');
+  const el=document.getElementById('content');
+  if(!list.length){
+    el.innerHTML=`<div class="empty"><i class="ti ti-car-off"></i><p>${cars.length?'No cars match this filter.':'No cars yet — click <strong>Add car</strong> to get started.'}</p></div>`;
+    return;
+  }
+  el.innerHTML=view==='cards'?`<div class="grid">${list.map(cardHTML).join('')}</div>`:`<div class="table-wrap">${tableHTML(list)}</div>`;
+}
+
+function cardHTML(c){
+  const title=[c.year,c.make,c.model,c.trim].filter(Boolean).join(' ')||'Untitled';
+  const cfRows=[
+    c.cfstatus  ?`<span class="cf-label">Carfax</span><span class="cf-val">${cfBadge(c.cfstatus)}</span>`:'',
+    c.damage    ?`<span class="cf-label">Damage</span><span class="cf-val"><span class="badge badge-flag">$${Number(c.damage).toLocaleString()}</span></span>`:'',
+    c.provinces ?`<span class="cf-label">Registered</span><span class="cf-val" style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">${provinceBadges(c.provinces)}</span>`:'',
+    c.owners    ?`<span class="cf-label">Owners</span><span class="cf-val">${c.owners}</span>`:'',
+    c.service   ?`<span class="cf-label">Service</span><span class="cf-val">${c.service}</span>`:'',
+    c.cfnotes   ?`<span class="cf-label">Flags</span><span class="cf-val" style="color:var(--text2)">${c.cfnotes}</span>`:'',
+  ].filter(Boolean);
+  return `<div class="card${c.status==='ruledout'?' ruled-out':''}">
+    <div class="card-header"><div class="card-title">${title}</div><div class="card-price">${fmtPrice(c.price)}</div></div>
+    <div class="card-meta">
+      ${statusBadge(c.status)}
+      ${c.dealer?`<span><i class="ti ti-building-store" style="font-size:11px;vertical-align:-1px"></i> ${c.dealer}</span>`:''}
+      ${c.mileage?`<span><i class="ti ti-gauge" style="font-size:11px;vertical-align:-1px"></i> ${fmtKm(c.mileage)}</span>`:''}
+    </div>
+    ${cfRows.length?`<div class="carfax-grid">${cfRows.join('')}</div>`:''}
+    ${c.notes?`<div class="card-notes">${c.notes}</div>`:''}
+    <div class="card-actions">
+      <button onclick="openModal('${c.id}')"><i class="ti ti-edit"></i> Edit</button>
+      ${c.url?`<button onclick="window.open('${c.url}','_blank')"><i class="ti ti-external-link"></i> Listing</button>`:''}
+      ${c.status!=='ruledout'
+        ?`<button onclick="quickStatus('${c.id}','ruledout')" style="margin-left:auto"><i class="ti ti-x"></i> Rule out</button>`
+        :`<button onclick="quickStatus('${c.id}','active')" style="margin-left:auto"><i class="ti ti-refresh"></i> Restore</button>`}
+    </div>
+  </div>`;
+}
+
+function tableHTML(list){
+  return `<table><thead><tr>
+    <th>Car</th><th>Price</th><th>Mileage</th><th>Dealer</th><th>Carfax</th><th>Damage</th><th>Provinces</th><th>Owners</th><th>Status</th>
+  </tr></thead><tbody>${list.map(c=>{
+    const title=[c.year,c.make,c.model,c.trim].filter(Boolean).join(' ')||'Untitled';
+    return `<tr class="${c.status==='ruledout'?'ruled-out':''}" onclick="openModal('${c.id}')">
+      <td><strong>${title}</strong></td><td>${fmtPrice(c.price)}</td><td>${fmtKm(c.mileage)}</td>
+      <td>${c.dealer||'—'}</td><td>${cfBadge(c.cfstatus)||'—'}</td>
+      <td>${c.damage?'$'+Number(c.damage).toLocaleString():'—'}</td>
+      <td>${c.provinces?(hasQC(c.provinces)?'<span class="chip-qc">⚠ QC</span> ':'')+c.provinces:'—'}</td>
+      <td>${c.owners||'—'}</td><td>${statusBadge(c.status)}</td>
+    </tr>`;
+  }).join('')}</tbody></table>`;
+}
+
+function quickStatus(id,status){ const c=cars.find(x=>x.id===id); if(c){c.status=status;persist();render();} }
+
+const FIELDS=['year','make','model','trim','price','mileage','dealer','status','url','cfstatus','damage','provinces','owners','service','cfnotes','notes'];
+function openModal(id){
+  editId=id||null;
+  FIELDS.forEach(f=>{const el=document.getElementById('f-'+f);if(el)el.value='';});
+  document.getElementById('f-status').value='active';
+  document.getElementById('paste-box').value='';
+  document.getElementById('parse-status').textContent='';
+  document.getElementById('parse-status').className='parse-status';
+  if(id){
+    const c=cars.find(x=>x.id===id);
+    if(c){
+      document.getElementById('modal-title').textContent='Edit car';
+      document.getElementById('delete-btn').style.display='inline-flex';
+      FIELDS.forEach(f=>{const el=document.getElementById('f-'+f);if(el&&c[f]!=null)el.value=c[f];});
+    }
+  } else {
+    document.getElementById('modal-title').textContent='Add car';
+    document.getElementById('delete-btn').style.display='none';
+  }
+  document.getElementById('modal').style.display='flex';
+  setTimeout(()=>document.getElementById('f-year').focus(),50);
+}
+function closeModal(){ document.getElementById('modal').style.display='none'; editId=null; }
+function bgClose(e){ if(e.target.id==='modal') closeModal(); }
+
+function saveCar(){
+  const g=id=>document.getElementById('f-'+id)?.value||'';
+  const c={
+    id:editId||(Date.now().toString(36)+Math.random().toString(36).slice(2)),
+    added:editId?(cars.find(x=>x.id===editId)?.added||Date.now()):Date.now(),
+    year:g('year'),make:g('make'),model:g('model'),trim:g('trim'),
+    price:g('price'),mileage:g('mileage'),dealer:g('dealer'),status:g('status'),url:g('url'),
+    cfstatus:g('cfstatus'),damage:g('damage'),provinces:g('provinces'),
+    owners:g('owners'),service:g('service'),cfnotes:g('cfnotes'),notes:g('notes')
+  };
+  if(editId){const i=cars.findIndex(x=>x.id===editId);if(i>-1)cars[i]=c;else cars.unshift(c);}
+  else cars.unshift(c);
+  persist(); closeModal(); render();
+}
+function deleteCar(){
+  if(!editId||!confirm('Delete this car? It will be removed from GitHub too.')) return;
+  cars=cars.filter(x=>x.id!==editId);
+  persist(); closeModal(); render();
+}
+
+function exportLocal(){
+  const blob=new Blob([JSON.stringify(cars,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='cars-backup.json'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function importLocal(e){
+  const file=e.target.files[0]; if(!file) return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const data=JSON.parse(ev.target.result);
+      if(Array.isArray(data)){
+        if(!confirm(`Import ${data.length} cars? Duplicates skipped.`)) return;
+        const ids=new Set(cars.map(c=>c.id));
+        const fresh=data.filter(c=>!ids.has(c.id));
+        cars=[...fresh,...cars];
+        persist(); render();
+        alert(`Imported ${fresh.length} new cars.`);
+      } else alert('Invalid format — expected a JSON array.');
+    } catch{ alert('Could not read file.'); }
+  };
+  r.readAsText(file); e.target.value='';
+}
+
+async function parseCarfax(){
+  const text=document.getElementById('paste-box').value.trim();
+  if(!text){alert('Paste some Carfax text first.');return;}
+  const akey=getSettings().akey;
+  if(!akey){alert('Add your Anthropic API key in Settings first.');toggleSettings();return;}
+  const btn=document.getElementById('parse-btn');
+  const status=document.getElementById('parse-status');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Parsing…';
+  status.textContent=''; status.className='parse-status';
+  const prompt=`You are parsing a Canadian vehicle Carfax or Carproof report. Extract the following fields and return ONLY a valid JSON object — no markdown, no explanation, no code fences.
+{"year":"","make":"","model":"","trim":"","mileage":"","cfstatus":"clean|accident|salvage|lemon","damage":"","provinces":"","owners":"","service":"","cfnotes":""}
+Rules:
+- Leave fields as empty string if not found.
+- cfstatus: clean=no accidents; accident=collision reported; salvage=written-off/rebuilt; lemon=lemon law.
+- damage: dollar amount only, no $ or commas. Sum multiple incidents.
+- mileage: number only in km. Convert miles if needed.
+- provinces: comma-separated abbreviations (ON, QC, AB, BC, MB, SK, NS, NB, PE, NL). Flag QC if present.
+- owners: number only.
+- service: short e.g. "6 records".
+- cfnotes: comma-separated flags: odometer issues, US history, fleet/rental, open recalls, lien. Empty if none.
+REPORT TEXT:\n${text.slice(0,5000)}`;
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':akey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,messages:[{role:'user',content:prompt}]})
+    });
+    if(!resp.ok){const e=await resp.json().catch(()=>({}));throw new Error(e.error?.message||`API ${resp.status}`);}
+    const data=await resp.json();
+    const parsed=JSON.parse(data.content?.find(b=>b.type==='text')?.text.replace(/```json|```/g,'').trim()||'{}');
+    let filled=0;
+    ['year','make','model','trim','mileage','cfstatus','damage','provinces','owners','service','cfnotes'].forEach(f=>{
+      if(parsed[f]){const el=document.getElementById('f-'+f);if(el){el.value=parsed[f];filled++;}}
+    });
+    status.textContent=`✓ Filled ${filled} fields — review below`; status.className='parse-status ok';
+  } catch(e){ status.textContent=`Error: ${e.message}`; status.className='parse-status err'; }
+  btn.disabled=false; btn.innerHTML='<i class="ti ti-sparkles"></i> Parse with AI';
+}
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('modal').style.display!=='none')closeModal();});
+initialLoad();
+</script>
+</body>
+</html>

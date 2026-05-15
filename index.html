@@ -447,6 +447,9 @@ function cardHTML(c){
     <div class="card-actions">
       <button onclick="openModal('${c.id}')"><i class="ti ti-edit"></i> Edit</button>
       ${c.url?`<button onclick="window.open('${c.url}','_blank')"><i class="ti ti-external-link"></i> Listing</button>`:''}
+      ${c.status==='favourite'
+        ?`<button onclick="quickStatus('${c.id}','active')" title="Unfavourite">⭐</button>`
+        :c.status!=='ruledout'?`<button onclick="quickStatus('${c.id}','favourite')" title="Favourite">☆</button>`:''}
       ${c.status!=='ruledout'
         ?`<button onclick="quickStatus('${c.id}','ruledout')" style="margin-left:auto"><i class="ti ti-x"></i> Rule out</button>`
         :`<button onclick="quickStatus('${c.id}','active')" style="margin-left:auto"><i class="ti ti-refresh"></i> Restore</button>`}

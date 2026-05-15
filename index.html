@@ -202,6 +202,10 @@ tr:hover td{background:var(--surface2);cursor:pointer}
       <div class="field"><label>Trim</label><input id="f-trim" placeholder="Sport Touring"></div>
     </div>
     <div class="field-row">
+      <div class="field"><label>Colour</label><input id="f-colour" placeholder="e.g. Lunar Silver"></div>
+      <div class="field"></div>
+    </div>
+    <div class="field-row">
       <div class="field"><label>Price ($)</label><input id="f-price" type="number" placeholder="18500" min="0"></div>
       <div class="field"><label>Mileage (km)</label><input id="f-mileage" type="number" placeholder="72000" min="0"></div>
     </div>
@@ -435,6 +439,7 @@ function cardHTML(c){
     <div class="card-meta">
       ${statusBadge(c.status)}
       ${c.dealer?`<span><i class="ti ti-building-store" style="font-size:11px;vertical-align:-1px"></i> ${c.dealer}</span>`:''}
+      ${c.colour?`<span><i class="ti ti-palette" style="font-size:11px;vertical-align:-1px"></i> ${c.colour}</span>`:''}
       ${c.mileage?`<span><i class="ti ti-gauge" style="font-size:11px;vertical-align:-1px"></i> ${fmtKm(c.mileage)}</span>`:''}
     </div>
     ${cfRows.length?`<div class="carfax-grid">${cfRows.join('')}</div>`:''}
@@ -451,11 +456,12 @@ function cardHTML(c){
 
 function tableHTML(list){
   return `<table><thead><tr>
-    <th>Car</th><th>Price</th><th>Mileage</th><th>Dealer</th><th>Carfax</th><th>Damage</th><th>Provinces</th><th>Owners</th><th>Status</th>
+    <th>Car</th><th>Price</th><th>Mileage</th><th>Colour</th><th>Dealer</th><th>Carfax</th><th>Damage</th><th>Provinces</th><th>Owners</th><th>Status</th>
   </tr></thead><tbody>${list.map(c=>{
     const title=[c.year,c.make,c.model,c.trim].filter(Boolean).join(' ')||'Untitled';
     return `<tr class="${c.status==='ruledout'?'ruled-out':''}" onclick="openModal('${c.id}')">
       <td><strong>${title}</strong></td><td>${fmtPrice(c.price)}</td><td>${fmtKm(c.mileage)}</td>
+      <td>${c.colour||'—'}</td>
       <td>${c.dealer||'—'}</td><td>${cfBadge(c.cfstatus)||'—'}</td>
       <td>${c.damage?'$'+Number(c.damage).toLocaleString():'—'}</td>
       <td>${c.provinces?(hasQC(c.provinces)?'<span class="chip-qc">⚠ QC</span> ':'')+c.provinces:'—'}</td>
@@ -466,7 +472,7 @@ function tableHTML(list){
 
 function quickStatus(id,status){ const c=cars.find(x=>x.id===id); if(c){c.status=status;persist();render();} }
 
-const FIELDS=['year','make','model','trim','price','mileage','dealer','status','url','cfstatus','damage','provinces','owners','service','cfnotes','notes'];
+const FIELDS=['year','make','model','trim','colour','price','mileage','dealer','status','url','cfstatus','damage','provinces','owners','service','cfnotes','notes'];
 function openModal(id){
   editId=id||null;
   FIELDS.forEach(f=>{const el=document.getElementById('f-'+f);if(el)el.value='';});
@@ -493,7 +499,7 @@ function saveCar(){
   const c={
     id:editId||(Date.now().toString(36)+Math.random().toString(36).slice(2)),
     added:editId?(cars.find(x=>x.id===editId)?.added||Date.now()):Date.now(),
-    year:g('year'),make:g('make'),model:g('model'),trim:g('trim'),
+    year:g('year'),make:g('make'),model:g('model'),trim:g('trim'),colour:g('colour'),
     price:g('price'),mileage:g('mileage'),dealer:g('dealer'),status:g('status'),url:g('url'),
     cfstatus:g('cfstatus'),damage:g('damage'),provinces:g('provinces'),
     owners:g('owners'),service:g('service'),cfnotes:g('cfnotes'),notes:g('notes')
